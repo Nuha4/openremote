@@ -183,6 +183,7 @@ export class OrJSONForms extends LitElement implements OwnPropsOfJsonFormsRender
             label: getLabel(this.schema!, this.uischema!, this.label, undefined) || "",
             required: this.required
         };
+        console.log(props)
         return getTemplateFromProps(this.contextValue, props) || html``;
     }
 }

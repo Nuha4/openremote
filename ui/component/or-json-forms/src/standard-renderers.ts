@@ -53,8 +53,12 @@ import "./layouts/layout-vertical-element";
 import "./controls/control-input-element";
 import "./controls/control-array-element";
 import {InputType, OrInputChangedEvent} from "@openremote/or-mwc-components/or-mwc-input";
+import {TableColumn, TableRow} from "@openremote/or-mwc-components/or-mwc-table";
+
 import {AdditionalProps} from "./base-element";
 import {Util} from "@openremote/core";
+
+import { i18next } from "@openremote/or-translate";
 
 const hasOneOfItems = (schema: JsonSchema): boolean =>
     schema.oneOf !== undefined &&
@@ -84,12 +88,14 @@ export const isEnumArray: Tester = and(
 export const verticalOrGroupLayoutTester: RankedTester = rankWith(
     1,
     or(
+        schemaMatches((schema) => { console.log("VerticalLayout", schema, uiTypeIs("VerticalLayout"), uiTypeIs("Group"));  return false}),
         uiTypeIs("VerticalLayout"),
-        uiTypeIs("Group")
+        uiTypeIs("Group"),
     )
 );
 
 export const verticalLayoutRenderer = (state: JsonFormsStateContext, props: OwnPropsOfJsonFormsRenderer & AdditionalProps) => {
+    console.log("VerticalLayout RENDER", props)
     const contentProps: RendererProps & DispatchPropsOfControl & AdditionalProps = {
         ...mapStateToLayoutProps({jsonforms: {...state}}, props),
         ...mapDispatchToControlProps(state.dispatch),
@@ -340,7 +346,7 @@ export const arrayControlRenderer = (state: JsonFormsStateContext, props: Contro
         ...mapDispatchToControlProps(state.dispatch)
     };
 
-    contentProps.label = props.label || contentProps.label;
+    contentProps.label =  props.label || contentProps.label;
     contentProps.required = !!props.required || contentProps.required;
     contentProps.minimal = props.minimal;
 
@@ -352,6 +358,66 @@ export const arrayControlRenderer = (state: JsonFormsStateContext, props: Contro
         }
     }
     return getTemplateWrapper(template, deleteHandler);
+};
+
+export const tableControlTester: RankedTester = rankWith(
+    6,
+    or(
+        uiTypeIs("VerticalLayout")
+    )
+  // schemaMatches(schema => { console.log("debugging", schema, "control" in schema);  return "control" in schema && schema.control === "allowed-values"})
+    // schemaMatches(() => true)
+    // or(schemaMatches(
+    //     schema => "control" in schema && schema.control === "allowed-values" 
+    //     // schema => "control:table" in schema && schema["control:table"] === "allowed-values" 
+    //     // hasType(schema, 'object') 
+    //     // && Object.values(schema.properties!).length > 0 
+    //     // && Object.values(schema.properties!).filter(v => hasType(v, 'array')).length > 0
+    // ))
+);
+export const tableControlRenderer = (
+  state: JsonFormsStateContext,
+  props: ControlProps & AdditionalProps
+) => {
+  const contentProps: ControlProps & AdditionalProps = {
+    ...mapStateToControlProps({ jsonforms: { ...state } }, props),
+    ...mapDispatchToControlProps(state.dispatch),
+  };
+
+  const rows: TableRow[] = [];
+
+  const filteredEntries = Object.entries(contentProps.data).filter(
+    ([key]) =>
+      "control:table" in contentProps.schema &&
+      (contentProps.schema["control:table"] as string[]).includes(key)
+  );
+  for (const [key, value] of filteredEntries) {
+    let i = 0;
+    for (const item of value as []) {
+      if (!rows[i]) rows[i] = { content: [] };
+      // rows[i].content!.push(item);
+      rows[i].content!.push(
+        html`<or-mwc-input
+          .type="${InputType.TEXT}"
+          .value="${item}"
+          @or-mwc-input-changed="${(e: OrInputChangedEvent) => {
+              console.log("PATH", contentProps.path)
+              // Currently always considered a new value
+              contentProps.handleChange([contentProps.path, key, i].join("."), e.detail.value);
+          }}"
+        ></or-mwc-input>`
+      );
+      i++;
+    }
+  }
+
+  const template = html`<or-mwc-table
+    .rows="${rows}"
+    .columns="${filteredEntries.map(([key]) => ({
+      title: key,
+    }))}"
+  ></or-mwc-table>`;
+  return getTemplateWrapper(template, undefined);
 };
 
 
@@ -382,5 +448,6 @@ export const StandardRenderers: JsonFormsRendererRegistryEntry[] = [
     {tester: objectControlTester, renderer: objectControlRenderer},
     {tester: arrayControlTester, renderer: arrayControlRenderer},
     {tester: anyOfOneOfControlTester, renderer: anyOfOneOfControlRenderer},
-    {tester: allOfControlTester, renderer: allOfControlRenderer}
+    {tester: allOfControlTester, renderer: allOfControlRenderer},
+    {tester: tableControlTester, renderer: tableControlRenderer}
 ];

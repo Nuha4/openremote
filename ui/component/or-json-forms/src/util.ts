@@ -46,8 +46,11 @@ export function getTemplateFromProps<T extends OwnPropsOfRenderer>(state: JsonFo
 
     if (renderers && schema && uischema && state.core) {
       const orderedRenderers: [JsonFormsRendererRegistryEntry, number][] = renderers.map(r => [r, r.tester(uischema, schema, { rootSchema: resolveSubSchemasRecursive(schema, state.core!.schema), config: state.config })] as [JsonFormsRendererRegistryEntry, number]).sort((a,b) => b[1] - a[1]);
+      console.log("orderedRenderers", orderedRenderers)
+      
         const renderer = orderedRenderers && orderedRenderers.length > 0 ? orderedRenderers[0] : undefined;
         if (renderer && renderer[1] !== -1) {
+            console.log("renderer", renderer, schema)
             template = renderer[0].renderer(state, props) as TemplateResult;
         } else {
             template = unknownTemplate();

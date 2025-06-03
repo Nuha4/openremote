@@ -41,6 +41,7 @@ import {geoJsonPointInputTemplateProvider} from "@openremote/or-map";
 import "@openremote/or-json-forms";
 import {ErrorObject, OrJSONForms, StandardRenderers} from "@openremote/or-json-forms";
 import {agentIdRendererRegistryEntry, loadAgents} from "./agent-link-json-forms-renderer";
+import { allowedValuesRendererRegistryEntry } from "./allowed-values-json-forms-renderer";
 
 export class OrAttributeInputChangedEvent extends CustomEvent<OrAttributeInputChangedEventDetail> {
 
@@ -118,6 +119,7 @@ export function getHelperText(sending: boolean, error: boolean, timestamp: numbe
 }
 
 const jsonFormsAttributeRenderers = [...StandardRenderers, agentIdRendererRegistryEntry];
+// const jsonFormsAttributeRenderers = [...StandardRenderers, agentIdRendererRegistryEntry, allowedValuesRendererRegistryEntry];
 type ErrorMessage = "agentNotFound" | "agentTypeMismatch";
 
 export const jsonFormsInputTemplateProvider: (fallback: ValueInputProvider) => ValueInputProviderGenerator = (fallback) => (assetDescriptor, valueHolder, valueHolderDescriptor, valueDescriptor, valueChangeNotifier, options) => {
